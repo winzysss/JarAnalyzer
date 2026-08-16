@@ -11,7 +11,7 @@ obfuscate edilmiş, şifrelenmiş veya uzantısı gizlenmiş — **şüpheli** o
 - **Tüm diskleri tarar.** NTFS ana dosya tablosunu doğrudan okur, saniyeler sürer.
 - **Sınıfların içine bakar.** JAR adı, içindeki sınıf yolları ve her sınıfın
   constant pool'u (isimler, metotlar, metin sabitleri) taranır.
-- **Uzantıya kanmaz.** `killaura.jar` → `d3d9.dll` yapılsa bile içeriğinden bulur.
+- **Uzantıya kanmaz.** `doomsday.jar` → `d3d9.dll` yapılsa bile içeriğinden bulur.
   Başına çöp bayt eklenmiş arşivleri de yakalar.
 - **Geri dönüşüm kutusunu tarar.** Silinmiş dosyalar da incelenir.
 - **Çalışan oyunu tarar.** Açık Java süreçlerinin gerçekte ne yüklediğini okur —
@@ -80,7 +80,7 @@ read — obfuscated, encrypted, or disguised — as **suspicious**.
 - **Scans all drives.** Reads the NTFS Master File Table directly; takes seconds.
 - **Looks inside classes.** The JAR name, entry paths, and each class's constant
   pool (names, methods, string literals) are all scanned.
-- **Ignores the extension.** A cheat renamed `killaura.jar` → `d3d9.dll` is still
+- **Ignores the extension.** A cheat renamed `doomsday.jar` → `d3d9.dll` is still
   found by content, as are archives with junk bytes prepended.
 - **Scans the recycle bin.** Deleted files are inspected too.
 - **Scans the running game.** Reads what live Java processes actually loaded — a
