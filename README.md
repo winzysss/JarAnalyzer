@@ -20,6 +20,26 @@ obfuscate edilmiş, şifrelenmiş veya uzantısı gizlenmiş — **şüpheli** o
 - **Kodu okutur.** Şüpheli bir JAR'a çift tıklayınca decompile edilir; bulunan
   hile terimleri kodun içinde kırmızı ile işaretlenir. `Ctrl+F` ile arama yapılır.
 
+## Decompile sekmesi
+
+Bir JAR'ı açtığında dört adım çalışır:
+
+1. **Şifre çözme** — şifreli sınıf verisi varsa çözülür.
+2. **Deobfuscation** — yalnızca obfuscate tespit edilirse. String'ler çözülür,
+   anlamsız isimler yeniden adlandırılır, düzleştirilmiş control-flow açılır,
+   reflection çağrıları çözümlenir.
+3. **Hile taraması** — sınıflar hile terimleri için taranır.
+4. **Yükleme** — sonuç ağaçta açılır.
+
+Bunlar **kodu senin okuyabilmen için** çalışır; tarama sonucunu (TEMİZ/ŞÜPHELİ/
+TESPİT) etkilemezler. Tespit doğrudan constant pool üzerinden yapılır, yani bir
+JAR deobfuscate edilemese bile hile terimleri yine bulunur — açılamayan arşiv
+zaten **ŞÜPHELİ** olarak işaretlenir.
+
+Deobfuscation basit ve orta seviye obfuscation'ı çözer. Ticari veya özel yazılmış
+obfuscator'ları tam açamaz; bu durumda kod okunmaz kalır ama JAR yine şüpheli
+olarak raporlanır.
+
 ## Sonuçlar
 
 | Sonuç | Anlamı |
@@ -64,7 +84,7 @@ değiştiremez veya kendi projende kullanamazsın. Derlenmiş uygulama serbestç
 indirilip çalıştırılabilir. Bkz. [`LICENSE`](LICENSE) ve
 [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**JarAnalyzer.exe SHA-256:** `dc1168dab1bf2e8bf5059a78f535d9e51a8d90bda48435176024e94bd3b780ce`
+**JarAnalyzer.exe SHA-256:** `23d16e096a0bf6ad6ce8e5f2540fb31dec7a9d78f3fd20d2dd22307a91a39a64`
 (Yardım → Hakkında çalışan kopyanın hash'ini gösterir.)
 
 ---
@@ -88,6 +108,26 @@ read — obfuscated, encrypted, or disguised — as **suspicious**.
   with `-XX:+DisableAttachMechanism` are still found via Windows.
 - **Shows you the code.** Double-click a suspicious JAR to decompile it; matched
   cheat terms are highlighted in the source. `Ctrl+F` to search.
+
+## The Decompile tab
+
+Opening a JAR runs four steps:
+
+1. **Decryption** — encrypted class data is decrypted if present.
+2. **Deobfuscation** — only when obfuscation is detected. Strings are decrypted,
+   mangled names are remapped, flattened control flow is unwound, and reflection
+   calls are resolved.
+3. **Cheat scan** — the classes are scanned for cheat terms.
+4. **Load** — the result opens in the tree.
+
+These run so *you* can read the code; they do not affect the verdict
+(CLEAN/SUSPICIOUS/DETECTED). Detection works directly off the constant pool, so a
+JAR that cannot be deobfuscated still has its cheat terms found — and an archive
+that cannot be read is flagged **SUSPICIOUS** regardless.
+
+Deobfuscation handles simple and mid-level obfuscation. Commercial or custom
+obfuscators are not fully undone; the code then stays unreadable, but the JAR is
+still reported as suspicious.
 
 ## Verdicts
 
@@ -132,5 +172,5 @@ The source is published **for inspection only** — you may read it, but not cop
 modify or reuse it without permission. The compiled application may be freely
 downloaded and run. See [`LICENSE`](LICENSE) and [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**JarAnalyzer.exe SHA-256:** `dc1168dab1bf2e8bf5059a78f535d9e51a8d90bda48435176024e94bd3b780ce`
+**JarAnalyzer.exe SHA-256:** `23d16e096a0bf6ad6ce8e5f2540fb31dec7a9d78f3fd20d2dd22307a91a39a64`
 (Help → About shows the running copy's hash.)
