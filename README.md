@@ -36,9 +36,9 @@ API ve JDK temiz kalır.
 
 ## Kurulum
 
-[**Releases**](../../releases) bölümünden ZIP'i indir, aç, `Jar Analyzer.exe`
-dosyasını çalıştır. Java kurulu olmasına gerek yok. Hızlı disk taraması için
-yönetici olarak açılır.
+[**Releases**](../../releases) bölümünden `JarAnalyzer.exe` dosyasını indir ve
+çalıştır. Kurulum yok, Java kurulu olmasına gerek yok. Hızlı disk taraması için
+yönetici izni ister.
 
 ## Kaynaktan derleme
 
@@ -64,7 +64,7 @@ değiştiremez veya kendi projende kullanamazsın. Derlenmiş uygulama serbestç
 indirilip çalıştırılabilir. Bkz. [`LICENSE`](LICENSE) ve
 [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**Exe SHA-256:** `fcbe4eccd024332aa69f1b28cc5574074f6d2d0d83224a956d1df0e3d76a53b6`
+**JarAnalyzer.exe SHA-256:** `1dc4efa595891ad1d8f07acf4a9f9f2fa14dd554d5efb234db8f00a98f9c7004`
 (Yardım → Hakkında çalışan kopyanın hash'ini gösterir.)
 
 ---
@@ -105,9 +105,9 @@ API and the JDK stay clean.
 
 ## Install
 
-Download the ZIP from [**Releases**](../../releases), extract it and run
-`Jar Analyzer.exe`. No Java installation needed. It requests administrator rights
-for the fast disk sweep.
+Download `JarAnalyzer.exe` from [**Releases**](../../releases) and run it. No
+installer, no Java needed. It requests administrator rights for the fast disk
+sweep.
 
 ## Build from source
 
@@ -132,5 +132,5 @@ The source is published **for inspection only** — you may read it, but not cop
 modify or reuse it without permission. The compiled application may be freely
 downloaded and run. See [`LICENSE`](LICENSE) and [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**Exe SHA-256:** `fcbe4eccd024332aa69f1b28cc5574074f6d2d0d83224a956d1df0e3d76a53b6`
+**JarAnalyzer.exe SHA-256:** `1dc4efa595891ad1d8f07acf4a9f9f2fa14dd554d5efb234db8f00a98f9c7004`
 (Help → About shows the running copy's hash.)
