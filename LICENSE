@@ -1,0 +1,44 @@
+Jar Analyzer
+Copyright (c) 2026 Winzys. All rights reserved.
+
+================================================================
+SOURCE-AVAILABLE LICENSE  /  KAYNAK-GÖRÜNÜR LİSANS
+================================================================
+
+ENGLISH
+
+This source code is published for inspection only. You may read it and
+study it. You may NOT copy, modify, redistribute, or use it — in whole or
+in part — in your own projects or products, and you may NOT create
+derivative works from it, without the prior written permission of the
+copyright holder.
+
+The compiled application ("Jar Analyzer.exe") may be freely downloaded and
+run for personal use.
+
+This software is provided "as is", without warranty of any kind. The author
+is not liable for any damage arising from its use.
+
+Third-party components bundled with the application remain under their own
+licenses; see THIRD-PARTY.md. Those licenses apply only to those
+components, not to this project's own source code.
+
+----------------------------------------------------------------
+
+TÜRKÇE
+
+Bu kaynak kod yalnızca inceleme amacıyla yayınlanmıştır. Okuyabilir ve
+inceleyebilirsiniz. Telif hakkı sahibinin önceden yazılı izni olmadan;
+kodu tamamen veya kısmen kopyalayamaz, değiştiremez, yeniden dağıtamaz,
+kendi projelerinizde veya ürünlerinizde KULLANAMAZ ve ondan türev çalışma
+oluşturamazsınız.
+
+Derlenmiş uygulama ("Jar Analyzer.exe") kişisel kullanım için serbestçe
+indirilip çalıştırılabilir.
+
+Bu yazılım "olduğu gibi" sunulur, hiçbir garanti verilmez. Yazar,
+kullanımından doğabilecek hiçbir zarardan sorumlu değildir.
+
+Uygulamayla birlikte gelen üçüncü taraf bileşenler kendi lisansları
+altındadır; bkz. THIRD-PARTY.md. O lisanslar yalnızca o bileşenler için
+geçerlidir, bu projenin kendi kaynak koduna uygulanmaz.
