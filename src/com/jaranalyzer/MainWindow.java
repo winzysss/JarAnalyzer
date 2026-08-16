@@ -162,10 +162,6 @@ public class MainWindow extends JFrame {
 
 		this.setExitOnEscWhenEnabled();
 
-		if (fileFromCommandLine != null && !fileFromCommandLine.getName().toLowerCase().endsWith(".jar")
-				&& !fileFromCommandLine.getName().toLowerCase().endsWith(".zip")) {
-			// model.startWarmUpThread(); // disabled: Procyon crash on Java 21+
-		}
 
 		if (RecentFiles.load() > 0) mainMenuBar.updateRecentFiles();
 
