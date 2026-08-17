@@ -35,14 +35,20 @@ public class JarAnalysis {
 	private String modLoader;
 	private final List<String> entryNames = new ArrayList<>();
 
-	// ---- decompilation ---------------------------------------------------
+	// ---- how far the read got ---------------------------------------------
 	private DecompileOutcome decompileOutcome = DecompileOutcome.NOT_ATTEMPTED;
-	private int classesDecompiled;
-	private int classesFailed;
-	private int classesSkipped;
+
+	/** Classes whose constant pool was parsed, and so actually searched. */
+	private int classesRead;
+
+	/**
+	 * Classes present but unparseable — truncated, encrypted, or deliberately
+	 * malformed to break tooling. A class counted here was never searched, so
+	 * this is the measure of how much of an archive stayed hidden.
+	 */
+	private int classesUnreadable;
+
 	private String decompileError;
-	private String decompiledText = "";
-	private final Map<String, String> perClassSource = new LinkedHashMap<>();
 
 	// ---- heuristics -------------------------------------------------------
 	private boolean obfuscated;
@@ -146,14 +152,14 @@ public class JarAnalysis {
 
 	public String getDecompileSummary() {
 		switch (decompileOutcome) {
-			case FULL_SOURCE:
-				return classesDecompiled + " src";
-			case PARTIAL_SOURCE:
-				return classesDecompiled + " src / " + classesFailed + " fail";
-			case BYTECODE_ONLY:
-				return classesFailed + " bytecode";
 			case NO_CLASSES:
 				return "-";
+			case POOL_SCANNED:
+				// The count is the point: "Scanned" alone does not say whether the
+				// archive gave up all of its classes or only most of them.
+				return classesUnreadable > 0
+						? classesRead + " / " + (classesRead + classesUnreadable)
+						: decompileOutcome.display();
 			default:
 				return decompileOutcome.display();
 		}
@@ -231,27 +237,17 @@ public class JarAnalysis {
 
 	public void setDecompileOutcome(DecompileOutcome v) { decompileOutcome = v; }
 
-	public int getClassesDecompiled() { return classesDecompiled; }
+	public int getClassesRead() { return classesRead; }
 
-	public void setClassesDecompiled(int v) { classesDecompiled = v; }
+	public void setClassesRead(int v) { classesRead = v; }
 
-	public int getClassesFailed() { return classesFailed; }
+	public int getClassesUnreadable() { return classesUnreadable; }
 
-	public void setClassesFailed(int v) { classesFailed = v; }
-
-	public int getClassesSkipped() { return classesSkipped; }
-
-	public void setClassesSkipped(int v) { classesSkipped = v; }
+	public void setClassesUnreadable(int v) { classesUnreadable = v; }
 
 	public String getDecompileError() { return decompileError; }
 
 	public void setDecompileError(String v) { decompileError = v; }
-
-	public String getDecompiledText() { return decompiledText; }
-
-	public void setDecompiledText(String v) { decompiledText = v == null ? "" : v; }
-
-	public Map<String, String> getPerClassSource() { return perClassSource; }
 
 	public boolean isObfuscated() { return obfuscated; }
 

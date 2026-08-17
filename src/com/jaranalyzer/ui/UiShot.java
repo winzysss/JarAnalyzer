@@ -72,11 +72,8 @@ public final class UiShot {
 				// hand-off from the scan table to the Decompile tab can be checked
 				// the same way everything else here is.
 				final boolean openInDecompiler = args.length > 6 && ":decompile:".equals(args[6]);
-				final int detailTab = !openInDecompiler && args.length > 6
-						? Integer.parseInt(args[6]) : -1;
 				SwingUtilities.invokeAndWait(() -> {
 					holder[0].getScanPanel().selectFirstRow();
-					if (detailTab >= 0) holder[0].getScanPanel().selectDetailTab(detailTab);
 					if (openInDecompiler) holder[0].getScanPanel().openSelectedInDecompiler();
 				});
 				// Decompiling a whole jar is slower than a repaint.

@@ -15,9 +15,6 @@ public class AppPreferences {
 	private String language = "tr";
 	private java.util.List<String> userKeywords = new java.util.ArrayList<>();
 
-	/** Accent pair for the Winzy UI; see com.jaranalyzer.ui.WinzyPalette.SCHEMES. */
-	private String accentScheme = "crimson";
-
 	// ---- scan screen layout ------------------------------------------------
 	// Panel visibility and the splitter position live here rather than in
 	// ScanSettings: they are window state, not scan behaviour, and this class is
@@ -53,14 +50,6 @@ public class AppPreferences {
 
 	public void setDetailSplitRatio(double detailSplitRatio) {
 		this.detailSplitRatio = detailSplitRatio;
-	}
-
-	public String getAccentScheme() {
-		return accentScheme == null || accentScheme.isEmpty() ? "crimson" : accentScheme;
-	}
-
-	public void setAccentScheme(String accentScheme) {
-		this.accentScheme = accentScheme;
 	}
 
 	public String getThemeXml() {

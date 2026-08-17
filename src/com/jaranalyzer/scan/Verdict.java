@@ -137,9 +137,9 @@ public enum Verdict {
 		// unparseable classes is normal in any large jar (stripped stubs, multi-
 		// release leftovers); treating that as resistance made every big library
 		// eligible for CRITICAL.
-		int attempted = a.getClassesDecompiled() + a.getClassesFailed();
+		int attempted = a.getClassesRead() + a.getClassesUnreadable();
 		boolean mostlyUnreadable = attempted > 0
-				&& (double) a.getClassesFailed() / attempted > 0.25;
+				&& (double) a.getClassesUnreadable() / attempted > 0.25;
 
 		boolean resisted = a.isObfuscated() || a.isEncrypted() || a.isStructurallyBroken()
 				|| a.getDecompileOutcome() == DecompileOutcome.FAILED

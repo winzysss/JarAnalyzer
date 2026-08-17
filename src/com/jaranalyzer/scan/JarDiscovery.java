@@ -95,16 +95,11 @@ public final class JarDiscovery {
 					public void onFile(String fullPath) {
 						if (stop.get()) return;
 						reported[0]++;
-						if (isExcludedPath(fullPath)) return;
 
 						File f = new File(fullPath);
 						long len = f.length();
 						if (len <= 0) return;   // never existed, or deleted since
 						if (settings.maxJarBytes > 0 && len > settings.maxJarBytes) return;
-						if (settings.skipKnownLibraries
-								&& com.jaranalyzer.CheatDetector.isLikelyLibraryJar(f.getName())) {
-							return;
-						}
 						volumeHits.add(f);
 					}
 
@@ -277,7 +272,6 @@ public final class JarDiscovery {
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
 					if (stop.get()) return FileVisitResult.TERMINATE;
 					if (attrs.isSymbolicLink()) return FileVisitResult.SKIP_SUBTREE;
-					if (isExcluded(dir)) return FileVisitResult.SKIP_SUBTREE;
 
 					if (listener != null && (filesSeen.get() & 0x3FF) == 0) {
 						listener.onProgress(filesSeen.get(), jarsFound.get(), dir.toString());
@@ -315,12 +309,6 @@ public final class JarDiscovery {
 						return FileVisitResult.CONTINUE;
 					}
 
-					if (settings.skipKnownLibraries
-							&& com.jaranalyzer.CheatDetector.isLikelyLibraryJar(
-									file.getFileName().toString())) {
-						return FileVisitResult.CONTINUE;
-					}
-
 					File f = file.toFile();
 					results.add(f);
 					jarsFound.incrementAndGet();
@@ -345,22 +333,4 @@ public final class JarDiscovery {
 		}
 	}
 
-	private boolean isExcluded(Path dir) {
-		return isExcludedPath(dir.toString());
-	}
-
-	private boolean isExcludedPath(String path) {
-		String p = path.toLowerCase(Locale.ROOT);
-
-		if (!settings.scanRecycleBin
-				&& (p.contains("$recycle.bin") || p.contains("recycler"))) {
-			return true;
-		}
-
-		for (String ex : settings.excludeDirectories) {
-			if (ex == null || ex.trim().isEmpty()) continue;
-			if (p.contains(ex.toLowerCase(Locale.ROOT))) return true;
-		}
-		return false;
-	}
 }

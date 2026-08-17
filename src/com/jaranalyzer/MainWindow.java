@@ -49,7 +49,6 @@ public class MainWindow extends JFrame {
 	private com.jaranalyzer.scan.Blacklist blacklist;
 	private com.jaranalyzer.ui.ScanPanel scanPanel;
 	private com.jaranalyzer.ui.BlacklistPanel blacklistPanel;
-	private com.jaranalyzer.ui.SettingsPanel settingsPanel;
 
 	public MainWindow(File fileFromCommandLine) {
 		instance = this;
@@ -110,12 +109,11 @@ public class MainWindow extends JFrame {
 		// The engine's configuration is loaded once and shared: the blacklist
 		// instance edited on the Blacklist tab is the same object the scanner
 		// compiles, so an added term is live on the next scan.
-		scanSettings = com.jaranalyzer.scan.ScanSettings.load();
+		scanSettings = new com.jaranalyzer.scan.ScanSettings();
 		blacklist = com.jaranalyzer.scan.BlacklistStore.load();
 
 		scanPanel = new com.jaranalyzer.ui.ScanPanel(scanSettings, blacklist, appPrefs);
 		blacklistPanel = new com.jaranalyzer.ui.BlacklistPanel(blacklist);
-		settingsPanel = new com.jaranalyzer.ui.SettingsPanel(scanSettings, this::changeAccentScheme);
 
 		mainTabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		// Metal paints the strip behind the tabs with the pane's own background
@@ -128,7 +126,6 @@ public class MainWindow extends JFrame {
 		mainTabbedPane.addTab(LanguageManager.getString("wjf.tab.scan"), scanPanel);
 		mainTabbedPane.addTab(LanguageManager.getString("wjf.tab.blacklist"), blacklistPanel);
 		mainTabbedPane.addTab(LanguageManager.getString("tab.decompile"), model);
-		mainTabbedPane.addTab(LanguageManager.getString("wjf.tab.settings"), settingsPanel);
 		applyTabTooltips();
 
 		// Double-click or right-click a result to open it in the Decompile tab,
@@ -169,7 +166,7 @@ public class MainWindow extends JFrame {
 	}
 
 	private void applyFlatTheme() {
-		com.jaranalyzer.ui.WinzyTheme.apply(appPrefs.getAccentScheme());
+		com.jaranalyzer.ui.WinzyTheme.apply();
 	}
 
 	private void setInitialTheme() {
@@ -189,20 +186,11 @@ public class MainWindow extends JFrame {
 		repaint();
 	}
 
-	/** Switches the accent pair for the whole application chrome. */
-	public void changeAccentScheme(String schemeKey) {
-		appPrefs.setAccentScheme(schemeKey);
-		com.jaranalyzer.ui.WinzyTheme.apply(schemeKey);
-		SwingUtilitiesUpdateUI();
-		repaint();
-	}
-
 	private void applyTabTooltips() {
 		String[] tips = {
 			LanguageManager.getString("wjf.tip.scan"),
 			LanguageManager.getString("wjf.tip.blacklist"),
 			LanguageManager.getString("tooltip.decompileTab"),
-			LanguageManager.getString("wjf.tip.settings"),
 		};
 		for (int i = 0; i < tips.length && i < mainTabbedPane.getTabCount(); i++) {
 			mainTabbedPane.setToolTipTextAt(i, tips[i]);
@@ -412,7 +400,6 @@ public class MainWindow extends JFrame {
 		mainTabbedPane.setTitleAt(0, LanguageManager.getString("wjf.tab.scan"));
 		mainTabbedPane.setTitleAt(1, LanguageManager.getString("wjf.tab.blacklist"));
 		mainTabbedPane.setTitleAt(2, LanguageManager.getString("tab.decompile"));
-		mainTabbedPane.setTitleAt(3, LanguageManager.getString("wjf.tab.settings"));
 		applyTabTooltips();
 	}
 

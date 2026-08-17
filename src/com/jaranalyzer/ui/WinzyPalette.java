@@ -1,8 +1,6 @@
 package com.jaranalyzer.ui;
 
 import java.awt.Color;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * The colour system.
@@ -38,26 +36,16 @@ public final class WinzyPalette {
 		}
 	}
 
-	/** Selectable accent pairs. "crimson" is the product's identity. */
-	public static final Map<String, Scheme> SCHEMES = new LinkedHashMap<>();
-
-	static {
-		// Red is the product's identity, and the pair matters as much as the
-		// primary: a single flat red reads as a warning banner rather than a
-		// theme. Pairing crimson with a warm ember gives the gradients somewhere
-		// to travel, which is what keeps large fills from looking like plastic.
-		// A touch deeper than the CRITICAL badge red on purpose — the chrome must
-		// not compete with the one colour that means "look at this".
-		put("crimson", "Kırmızı", 0xE8394C, 0xFF8A4C);
-		put("violet", "Mor", 0xA06BFF, 0x3AD8D0);
-		put("cyan", "Cyan", 0x3AD8D0, 0x7F8CFF);
-		put("emerald", "Zümrüt", 0x35D6A0, 0x8FE388);
-		put("amber", "Kehribar", 0xFFB238, 0xFF7A5C);
-	}
-
-	private static void put(String key, String label, int a, int b) {
-		SCHEMES.put(key, new Scheme(key, label, new Color(a), new Color(b)));
-	}
+	/**
+	 * The one accent pair. Red is the product's identity, and the pair matters as
+	 * much as the primary: a single flat red reads as a warning banner rather than
+	 * a theme. Pairing crimson with a warm ember gives the gradients somewhere to
+	 * travel, which is what keeps large fills from looking like plastic. A touch
+	 * deeper than the CRITICAL badge red on purpose — the chrome must not compete
+	 * with the one colour that means "look at this".
+	 */
+	private static final Scheme CRIMSON = new Scheme(
+			"crimson", "Kırmızı", new Color(0xE8394C), new Color(0xFF8A4C));
 
 	// ---- surfaces ----------------------------------------------------------
 	//
@@ -104,28 +92,21 @@ public final class WinzyPalette {
 
 	// ---- active accent -----------------------------------------------------
 
-	private static Scheme active = SCHEMES.get("crimson");
-
-	public static void setScheme(String key) {
-		Scheme s = SCHEMES.get(key);
-		if (s != null) active = s;
-	}
-
 	public static Scheme scheme() {
-		return active;
+		return CRIMSON;
 	}
 
 	public static Color accent() {
-		return active.accent;
+		return CRIMSON.accent;
 	}
 
 	public static Color accent2() {
-		return active.accent2;
+		return CRIMSON.accent2;
 	}
 
 	/** Accent at low opacity, for selection fills and badge backgrounds. */
 	public static Color accentWash(int alpha) {
-		Color a = active.accent;
+		Color a = CRIMSON.accent;
 		return new Color(a.getRed(), a.getGreen(), a.getBlue(), alpha);
 	}
 

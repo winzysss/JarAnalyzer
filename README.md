@@ -65,10 +65,13 @@ yönetici izni ister.
 JDK 17+ gerekir. Maven/Gradle yok.
 
 ```powershell
-.\build.ps1            # derle -> build\JarAnalyzer.jar
-.\build.ps1 -Run       # derle ve çalıştır
-.\build.ps1 -Package   # exe üret -> dist\Jar Analyzer\
+.\build.ps1              # derle -> build\JarAnalyzer.jar
+.\build.ps1 -Run         # derle ve çalıştır
+.\build.ps1 -Package     # uygulama klasörü -> dist\Jar Analyzer\
+.\build.ps1 -SingleFile  # tek dosya exe -> dist\JarAnalyzer.exe
 ```
+
+`-SingleFile`, `-Package` çıktısını tek bir exe'ye sarar; yayınlanan dosya budur.
 
 Komut satırından tarama:
 
@@ -84,7 +87,7 @@ değiştiremez veya kendi projende kullanamazsın. Derlenmiş uygulama serbestç
 indirilip çalıştırılabilir. Bkz. [`LICENSE`](LICENSE) ve
 [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**JarAnalyzer.exe SHA-256:** `23d16e096a0bf6ad6ce8e5f2540fb31dec7a9d78f3fd20d2dd22307a91a39a64`
+**JarAnalyzer.exe SHA-256:** `c14a0f27c18a700d61aa312d995716c0d0c73d10c01ac44954e758263a121f2b`
 (Yardım → Hakkında çalışan kopyanın hash'ini gösterir.)
 
 ---
@@ -154,10 +157,14 @@ sweep.
 Requires JDK 17+. No Maven or Gradle.
 
 ```powershell
-.\build.ps1            # compile -> build\JarAnalyzer.jar
-.\build.ps1 -Run       # compile and launch
-.\build.ps1 -Package   # produce exe -> dist\Jar Analyzer\
+.\build.ps1              # compile -> build\JarAnalyzer.jar
+.\build.ps1 -Run         # compile and launch
+.\build.ps1 -Package     # application folder -> dist\Jar Analyzer\
+.\build.ps1 -SingleFile  # one-file exe -> dist\JarAnalyzer.exe
 ```
+
+`-SingleFile` wraps the `-Package` output into a single exe; that is what gets
+published.
 
 Command-line scan:
 
@@ -172,5 +179,5 @@ The source is published **for inspection only** — you may read it, but not cop
 modify or reuse it without permission. The compiled application may be freely
 downloaded and run. See [`LICENSE`](LICENSE) and [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**JarAnalyzer.exe SHA-256:** `23d16e096a0bf6ad6ce8e5f2540fb31dec7a9d78f3fd20d2dd22307a91a39a64`
+**JarAnalyzer.exe SHA-256:** `c14a0f27c18a700d61aa312d995716c0d0c73d10c01ac44954e758263a121f2b`
 (Help → About shows the running copy's hash.)

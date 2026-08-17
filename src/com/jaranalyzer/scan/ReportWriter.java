@@ -87,8 +87,8 @@ public final class ReportWriter {
 			}
 			row(sb, "  " + Msg.t("wjf.r.decompiled"),
 					a.getDecompileOutcome().display()
-					+ "  (" + a.getClassesDecompiled() + " " + Msg.t("wjf.r.ok") + ", "
-					+ a.getClassesFailed() + " " + Msg.t("wjf.r.failed") + ")");
+					+ "  (" + a.getClassesRead() + " " + Msg.t("wjf.r.ok") + ", "
+					+ a.getClassesUnreadable() + " " + Msg.t("wjf.r.failed") + ")");
 			if (a.isObfuscated()) {
 				row(sb, "  " + Msg.t("wjf.r.obfuscated"), Msg.t("wjf.r.yes")
 						+ (a.getObfuscatorGuess().isEmpty() ? "" : " — " + a.getObfuscatorGuess()));
@@ -133,8 +133,8 @@ public final class ReportWriter {
 			j.put("riskScore", a.getRiskScore());
 			j.put("decompile", a.getDecompileOutcome().en());
 			j.put("classesTotal", a.getClassCount());
-			j.put("classesDecompiled", a.getClassesDecompiled());
-			j.put("classesFailed", a.getClassesFailed());
+			j.put("classesRead", a.getClassesRead());
+			j.put("classesUnreadable", a.getClassesUnreadable());
 			j.put("obfuscated", a.isObfuscated());
 			j.put("obfuscator", a.getObfuscatorGuess());
 			j.put("encrypted", a.isEncrypted());

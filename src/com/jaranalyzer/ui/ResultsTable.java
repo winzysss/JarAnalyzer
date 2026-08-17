@@ -53,7 +53,13 @@ public class ResultsTable extends JTable {
 		setIntercellSpacing(new java.awt.Dimension(0, 0));
 		setRowHeight(30);
 		setFillsViewportHeight(true);
-		setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
+		// Explorer behaviour: dragging a header divider resizes that column and
+		// leaves every other one alone. Under any auto-resize mode Swing steals the
+		// width back from a neighbour, so widening "Dosya" silently narrows "Yol"
+		// and the table can never be wider than the window — which is the whole
+		// problem with a full path in the last column. The scroll pane this table
+		// sits in is what gives the horizontal scrollbar.
+		setAutoResizeMode(AUTO_RESIZE_OFF);
 		setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 		getTableHeader().setReorderingAllowed(false);
 		setBackground(WinzyPalette.PANEL);
@@ -150,9 +156,24 @@ public class ResultsTable extends JTable {
 	}
 
 	public void refreshLabels() {
+		// Rebuilding the columns for the new header text throws away whatever the
+		// user dragged them to. Switching language is not a request to undo that,
+		// so the widths are carried across.
+		int[] kept = new int[getColumnModel().getColumnCount()];
+		for (int i = 0; i < kept.length; i++) {
+			kept[i] = getColumnModel().getColumn(i).getWidth();
+		}
+
 		model.fireTableStructureChanged();
 		installRenderers();
-		sizeColumns();
+
+		if (kept.length == getColumnModel().getColumnCount()) {
+			for (int i = 0; i < kept.length; i++) {
+				getColumnModel().getColumn(i).setPreferredWidth(kept[i]);
+			}
+		} else {
+			sizeColumns();
+		}
 	}
 
 	// =====================================================================
@@ -162,7 +183,11 @@ public class ResultsTable extends JTable {
 		// ("ŞÜPHELİ  Obfuscate"); the top-finding column gives that width back.
 		int[] widths = { 178, 240, 78, 116, 60, 62, 120, 250, 400 };
 		for (int i = 0; i < widths.length && i < getColumnModel().getColumnCount(); i++) {
-			getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+			javax.swing.table.TableColumn c = getColumnModel().getColumn(i);
+			c.setPreferredWidth(widths[i]);
+			// Low enough that a column can be dragged down to a stub when it is in
+			// the way, rather than Swing refusing past some default floor.
+			c.setMinWidth(28);
 		}
 	}
 

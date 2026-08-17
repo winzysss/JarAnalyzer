@@ -55,11 +55,10 @@ public class BlacklistPanel extends JPanel {
 	private static final int C_KIND = 2;
 	private static final int C_SEVERITY = 3;
 	private static final int C_CATEGORY = 4;
-	private static final int C_CODE = 5;
-	private static final int C_PATH = 6;
-	private static final int C_STR = 7;
-	private static final int C_CASE = 8;
-	private static final int C_DESC = 9;
+	private static final int C_PATH = 5;
+	private static final int C_STR = 6;
+	private static final int C_CASE = 7;
+	private static final int C_DESC = 8;
 
 	private final Blacklist blacklist;
 	private final Model model = new Model();
@@ -84,7 +83,7 @@ public class BlacklistPanel extends JPanel {
 				BlacklistEntry b = model.rows.get(e.getIdentifier());
 				return b.getPattern().toLowerCase(Locale.ROOT).contains(filter)
 						|| b.getCategory().toLowerCase(Locale.ROOT).contains(filter)
-						|| b.getDescription().toLowerCase(Locale.ROOT).contains(filter);
+						|| b.describe().toLowerCase(Locale.ROOT).contains(filter);
 			}
 		});
 		table.setRowSorter(sorter);
@@ -106,6 +105,7 @@ public class BlacklistPanel extends JPanel {
 		wrap.setOpaque(false);
 		wrap.setBorder(BorderFactory.createEmptyBorder(0, 22, 18, 22));
 		wrap.add(sp, BorderLayout.CENTER);
+		wrap.add(buildStorageLine(), BorderLayout.SOUTH);
 		add(wrap, BorderLayout.CENTER);
 
 		reload();
@@ -188,7 +188,7 @@ public class BlacklistPanel extends JPanel {
 		table.getColumnModel().getColumn(C_SEVERITY).setCellRenderer(new SeverityRenderer());
 		table.getColumnModel().getColumn(C_PATTERN).setCellRenderer(new PatternRenderer());
 
-		int[] w = { 44, 260, 90, 96, 120, 56, 56, 56, 56, 380 };
+		int[] w = { 44, 260, 90, 96, 120, 56, 56, 56, 380 };
 		for (int i = 0; i < w.length; i++) {
 			table.getColumnModel().getColumn(i).setPreferredWidth(w[i]);
 		}
@@ -214,6 +214,21 @@ public class BlacklistPanel extends JPanel {
 	 * someone clearing the way for a known cheat, and that should not pass
 	 * quietly during a check.
 	 */
+	/**
+	 * Where the list on screen actually lives on disk.
+	 *
+	 * <p>Worth a line of chrome: the blacklist is the one piece of the tool a user
+	 * edits, and "my terms are gone" is answered by knowing which file to look at.
+	 */
+	private JComponent buildStorageLine() {
+		JLabel l = new JLabel(t("wjf.bl.storedAt") + "  "
+				+ com.jaranalyzer.scan.BlacklistStore.blacklistFile());
+		l.setFont(WinzyTheme.ui(Font.PLAIN, 11f));
+		l.setForeground(WinzyPalette.TEXT_FAINT);
+		l.setBorder(BorderFactory.createEmptyBorder(8, 2, 0, 2));
+		return l;
+	}
+
 	private JComponent buildTamperBar() {
 		tamperBar = new JLabel();
 		tamperBar.setOpaque(true);
@@ -407,7 +422,7 @@ public class BlacklistPanel extends JPanel {
 
 		@Override
 		public int getColumnCount() {
-			return 10;
+			return 9;
 		}
 
 		@Override
@@ -418,7 +433,6 @@ public class BlacklistPanel extends JPanel {
 				case C_KIND: return t("wjf.bl.col.kind");
 				case C_SEVERITY: return t("wjf.bl.col.severity");
 				case C_CATEGORY: return t("wjf.bl.col.category");
-				case C_CODE: return t("wjf.bl.col.code");
 				case C_PATH: return t("wjf.bl.col.path");
 				case C_STR: return t("wjf.bl.col.string");
 				case C_CASE: return t("wjf.bl.col.case");
@@ -431,7 +445,6 @@ public class BlacklistPanel extends JPanel {
 		public Class<?> getColumnClass(int c) {
 			switch (c) {
 				case C_ON:
-				case C_CODE:
 				case C_PATH:
 				case C_STR:
 				case C_CASE: return Boolean.class;
@@ -455,11 +468,10 @@ public class BlacklistPanel extends JPanel {
 				case C_KIND: return e.getKind();
 				case C_SEVERITY: return e.getSeverity();
 				case C_CATEGORY: return e.getCategory();
-				case C_CODE: return e.isScanCode();
 				case C_PATH: return e.isScanPaths();
 				case C_STR: return e.isScanStrings();
 				case C_CASE: return e.isCaseSensitive();
-				case C_DESC: return e.getDescription();
+				case C_DESC: return e.describe();
 				default: return "";
 			}
 		}
@@ -473,7 +485,6 @@ public class BlacklistPanel extends JPanel {
 				case C_KIND: e.setKind((MatchKind) v); break;
 				case C_SEVERITY: e.setSeverity((Severity) v); break;
 				case C_CATEGORY: e.setCategory(String.valueOf(v)); break;
-				case C_CODE: e.setScanCode(Boolean.TRUE.equals(v)); break;
 				case C_PATH: e.setScanPaths(Boolean.TRUE.equals(v)); break;
 				case C_STR: e.setScanStrings(Boolean.TRUE.equals(v)); break;
 				case C_CASE: e.setCaseSensitive(Boolean.TRUE.equals(v)); break;

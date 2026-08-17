@@ -491,6 +491,10 @@ public class ScanPanel extends JPanel {
 		tableScroll.setBorder(BorderFactory.createLineBorder(WinzyPalette.LINE));
 		tableScroll.getViewport().setBackground(WinzyPalette.PANEL);
 		tableScroll.getVerticalScrollBar().setUnitIncrement(20);
+		// The table sizes its own columns and may end up wider than the window, so
+		// the pane has to be able to scroll sideways instead of clipping.
+		tableScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		tableScroll.getHorizontalScrollBar().setUnitIncrement(20);
 
 		final JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScroll, detail);
 		bodySplit = split;
@@ -985,10 +989,5 @@ public class ScanPanel extends JPanel {
 		if (table.getRowCount() > 0) {
 			table.setRowSelectionInterval(0, 0);
 		}
-	}
-
-	/** Switches the detail pane to a given tab (0 = overview, 2 = decompiled code). */
-	public void selectDetailTab(int index) {
-		detail.selectTab(index);
 	}
 }

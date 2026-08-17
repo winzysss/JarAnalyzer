@@ -34,7 +34,7 @@ public final class ScanCli {
 			return 1;
 		}
 
-		ScanSettings settings = ScanSettings.load();
+		ScanSettings settings = new ScanSettings();
 		Blacklist blacklist = BlacklistStore.load();
 		blacklist.compile();
 
@@ -43,11 +43,6 @@ public final class ScanCli {
 				+ "  (" + BlacklistStore.blacklistFile() + ")");
 		System.out.println("  workers   : " + settings.effectiveWorkers());
 		System.out.println("  disk scan : " + describeDiscovery(settings));
-		System.out.println("  decompile : " + switch (settings.decompileMode) {
-			case OFF -> "off (constant-pool scan only)";
-			case ALL -> "every JAR";
-			default -> "flagged JARs only";
-		});
 		System.out.println();
 
 		final long[] lastPrint = { 0 };

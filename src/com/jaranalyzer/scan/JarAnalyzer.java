@@ -83,9 +83,7 @@ public final class JarAnalyzer {
 				return a;
 			}
 
-			if (settings.computeHashes) {
-				a.setSha256(sha256(file));
-			}
+			a.setSha256(sha256(file));
 
 			// 3. Everything that needs the archive open.
 			try (JarFile jf = new JarFile(file, false)) {
@@ -96,33 +94,29 @@ public final class JarAnalyzer {
 				ObfuscationAnalyzer.Result obf = new ObfuscationAnalyzer.Result();
 				inventory(jf, a, depth, deadline, obf);
 
-				if (settings.detectObfuscation) {
-					ObfuscationAnalyzer.detectMarkers(a.getManifestText(), obf);
-					obf.finish();
-					ObfuscationAnalyzer.contribute(obf, a);
-				}
+				ObfuscationAnalyzer.detectMarkers(a.getManifestText(), obf);
+				obf.finish();
+				ObfuscationAnalyzer.contribute(obf, a);
 
 				if (a.getDecompileOutcome() == DecompileOutcome.NOT_ATTEMPTED) {
-					a.setDecompileOutcome(a.getClassCount() == 0
-							? DecompileOutcome.NO_CLASSES : DecompileOutcome.POOL_SCANNED);
+					if (a.getClassCount() == 0) {
+						a.setDecompileOutcome(DecompileOutcome.NO_CLASSES);
+					} else if (a.getClassesRead() == 0) {
+						// Classes are there and not one of them parsed. A normal
+						// archive never does this, so it counts as the archive
+						// resisting analysis rather than as a tool limitation.
+						a.setDecompileOutcome(DecompileOutcome.FAILED);
+					} else {
+						a.setDecompileOutcome(DecompileOutcome.POOL_SCANNED);
+					}
 				}
 
-				// 4. Source reconstruction, for the archives a human will actually
-				// open. Under FLAGGED only the ones with a finding or a reason to
-				// distrust them are rebuilt, so a full sweep does not spend minutes
-				// per game jar reconstructing code nobody reads.
-				if (shouldDecompile(a)) {
-					DecompilerConfig cfg = new DecompilerConfig();
-					cfg.setShowSyntheticMembers(true);
-					DecompileEngine.run(jf, a, settings.toDecompileOptions(deadline), cfg,
-							flaggedClasses(a));
-
-					// Source can surface a term the pool cannot: an obfuscator that
-					// splits a literal across concatenations leaves the fragments in
-					// the pool but the whole string only in reconstructed code.
-					scanText(a, a.getDecompiledText(), BlacklistEntry.ScanSurface.CODE,
-							Finding.Source.DECOMPILED, null, true);
-				}
+				// No source is reconstructed here. The pool scan above is the whole
+				// search — measured over 2033 archives, decompiling every flagged JAR
+				// produced 893 further findings and not one of them changed a verdict,
+				// because a term that reaches reconstructed source was already in the
+				// constant pool it was reconstructed from. Source is built on demand
+				// instead, when a person opens an archive to read it.
 			} catch (java.util.zip.ZipException ze) {
 				// JarFile refuses encrypted and structurally broken archives. The raw
 				// inspector above already recorded why, so this only sets the outcome.
@@ -148,22 +142,16 @@ public final class JarAnalyzer {
 	}
 
 	private void finish(JarAnalysis a, long started) {
+		// An archive that resists analysis is suspicious, always. That is the
+		// point: obfuscation and encryption are what a cheat uses to avoid being
+		// read, so "unreadable" is a result rather than a missing one.
 		a.setVerdict(Verdict.decide(a));
 
-		// The "cannot read it, so treat it as suspicious" rule is a user setting;
-		// when it is off, an opaque-but-clean archive drops back to a note.
-		if (!settings.opaqueMeansSuspicious && a.getVerdict() == Verdict.SUSPICIOUS) {
-			a.setVerdict(Verdict.NOTABLE);
-		}
-
-		if (!settings.keepTextForCleanJars && !a.getVerdict().needsAttention()) {
+		if (!a.getVerdict().needsAttention()) {
 			// A full-disk sweep keeps every result object alive for the results
-			// table, so anything not needed to display a clean row has to go. The
-			// entry list matters as much as the source: a few thousand archives
-			// holding a few thousand path strings each is hundreds of megabytes on
-			// its own, and none of it is ever shown for a JAR nobody will open.
-			a.setDecompiledText("");
-			a.getPerClassSource().clear();
+			// table, so anything not needed to display a clean row has to go: a few
+			// thousand archives holding a few thousand entry paths each is hundreds
+			// of megabytes, and none of it is ever shown for a JAR nobody opens.
 			a.getEntryNames().clear();
 			a.setManifestText("");
 		}
@@ -175,55 +163,12 @@ public final class JarAnalyzer {
 	//  Archive walk
 	// =====================================================================
 
-	/**
-	 * The class entries that actually produced a finding.
-	 *
-	 * <p>Decompiling is for a person to read, and what they want to read is the
-	 * code that matched — not the other thousands of classes shipped next to it.
-	 * Reconstructing a whole large flagged JAR to show a handful of matched classes
-	 * is most of the analysis cost for no added value.
-	 *
-	 * <p>An empty result means "no class in particular" — an archive flagged for
-	 * being obfuscated or broken rather than for a match — and the engine falls
-	 * back to its usual bounded sweep there.
-	 */
-	private static java.util.Set<String> flaggedClasses(JarAnalysis a) {
-		java.util.Set<String> out = new java.util.LinkedHashSet<>();
-		for (Finding f : a.getFindings()) {
-			String loc = f.getLocation();
-			if (loc == null || !loc.endsWith(".class")) continue;
-			out.add(loc);
-		}
-		return out;
-	}
-
-	private boolean shouldDecompile(JarAnalysis a) {
-		switch (settings.decompileMode) {
-			case OFF:
-				return false;
-			case ALL:
-				return a.getClassCount() > 0;
-			case FLAGGED:
-			default:
-				if (a.getClassCount() == 0) return false;
-				if (a.isObfuscated() || a.isEncrypted() || a.isStructurallyBroken()) return true;
-
-				// Only a finding worth reading source over. The MEDIUM tier is the
-				// context tier — "Step", "ProcessBuilder", "Cipher.getInstance" —
-				// and vanilla Minecraft alone carries three of them. Treating any
-				// finding as a trigger made the common case decompile everything,
-				// which is the cost this mode exists to avoid.
-				for (Finding f : a.getFindings()) {
-					if (f.getSeverity().weight() >= Severity.HIGH.weight()) return true;
-				}
-				return false;
-		}
-	}
-
 	private void inventory(JarFile jf, JarAnalysis a, int depth, long deadline,
 			ObfuscationAnalyzer.Result obf) {
 		int entries = 0;
 		int classes = 0;
+		int read = 0;
+		int unreadable = 0;
 		int resources = 0;
 		int nested = 0;
 		int natives = 0;
@@ -251,25 +196,22 @@ public final class JarAnalyzer {
 				a.getEntryNames().add(name);
 			}
 
-			// Bundled third-party code is skipped on every surface, not just during
-			// decompilation. Scanning it anyway is what turns a runtime library into
-			// a "finding": the JDK genuinely contains defineClass and ProcessBuilder,
-			// and reporting that tells the operator nothing about the mod under test.
-			boolean library = settings.skipLibraryPackages && isLibraryEntry(name);
+			// Every entry is scanned, including ones that sit under a well-known
+			// third-party package. Shading a cheat under com/google/gson/ is a
+			// one-line change, so a package name is not evidence of anything, and
+			// a blind spot anyone can move into is worse than the occasional
+			// finding on a genuine library.
 
 			// Entry paths are a scan surface of their own: a cheat's package
 			// structure survives even when every identifier inside is mangled.
-			if (!library) {
-				scanText(a, name, BlacklistEntry.ScanSurface.PATH,
-						lower.endsWith(".class") ? Finding.Source.CLASS_NAME : Finding.Source.ENTRY_PATH,
-						name, false);
-			}
+			scanText(a, name, BlacklistEntry.ScanSurface.PATH,
+					lower.endsWith(".class") ? Finding.Source.CLASS_NAME : Finding.Source.ENTRY_PATH,
+					name, false);
 
 			if (lower.endsWith(".class")) {
 				classes++;
-				if (!library) {
-					scanClass(jf, e, a, obf);
-				}
+				if (scanClass(jf, e, a, obf)) read++;
+				else unreadable++;
 				continue;
 			}
 
@@ -299,15 +241,14 @@ public final class JarAnalyzer {
 
 		a.setEntryCount(entries);
 		a.setClassCount(classes);
+		a.setClassesRead(read);
+		a.setClassesUnreadable(unreadable);
 		a.setResourceCount(resources);
 		a.setNestedJarCount(nested);
 		a.setNativeLibCount(natives);
 
-		// Silence here would be a lie. This is the one truncation that actually
-		// costs coverage: the constant-pool scan runs inside this loop, so entries
-		// past the deadline were never searched at all. (A decompile limit is
-		// different — detection had already covered those classes, so that one
-		// only earns a log note.)
+		// Silence here would be a lie: the constant-pool scan runs inside this
+		// loop, so entries past the deadline were never searched at all.
 		if (truncated) {
 			a.add(Finding.heuristic(
 					Msg.t("wjf.h.incomplete"),
@@ -315,24 +256,6 @@ public final class JarAnalyzer {
 					Msg.t("wjf.h.classes", classes, a.getEntryCount()),
 					Msg.t("wjf.h.incomplete.why")));
 		}
-	}
-
-	/**
-	 * Whether an entry belongs to a bundled third-party package.
-	 *
-	 * <p>Shaded jars and module-style archives put classes under a wrapper
-	 * directory ({@code classes/}, {@code BOOT-INF/classes/}, {@code WEB-INF/classes/}),
-	 * so the package prefix is matched after stripping those.
-	 */
-	private static boolean isLibraryEntry(String name) {
-		String n = name;
-		for (String prefix : new String[] { "classes/", "BOOT-INF/classes/", "WEB-INF/classes/" }) {
-			if (n.startsWith(prefix)) {
-				n = n.substring(prefix.length());
-				break;
-			}
-		}
-		return DecompileEngine.isLibraryPackage(n);
 	}
 
 	// ---- resources --------------------------------------------------------
@@ -543,17 +466,27 @@ public final class JarAnalyzer {
 	 * entire class as ISO-8859-1 text and searched that, which happily matched
 	 * blacklist terms against runs of raw bytecode that never spelled anything.
 	 */
-	private void scanClass(JarFile jf, JarEntry e, JarAnalysis a, ObfuscationAnalyzer.Result obf) {
+	/**
+	 * Reads one class and searches its constant pool.
+	 *
+	 * @return false when the class could not be read at all. That is a signal in
+	 *         its own right rather than a shrug: a class the tool cannot parse is
+	 *         a class it never searched, and an archive full of them is hiding
+	 *         something whether or not it was flagged for anything else.
+	 */
+	private boolean scanClass(JarFile jf, JarEntry e, JarAnalysis a, ObfuscationAnalyzer.Result obf) {
 		long size = e.getSize();
-		if (size > 4 * 1024 * 1024) return;
+		// Not a failure: a class this large is a generated monster (huge switch
+		// tables, embedded data) and nothing hides in one.
+		if (size > 4 * 1024 * 1024) return true;
 
 		byte[] data = read(jf, e, 4 * 1024 * 1024);
-		if (data == null || data.length < 10) return;
+		if (data == null || data.length < 10) return false;
 
 		ClassScanner.ClassInfo info = ClassScanner.read(data);
 		obf.accumulate(info);
 
-		if (info.constants.isEmpty()) return;
+		if (info.constants.isEmpty()) return false;
 
 		String joined = ClassScanner.joinConstants(info, 1_000_000);
 		scanText(a, joined, BlacklistEntry.ScanSurface.STRING,
@@ -568,6 +501,7 @@ public final class JarAnalyzer {
 		// a genuine limit of any static text scan; the obfuscation heuristic still
 		// catches the XOR-decode variant, and the running-JVM scan catches it once
 		// it loads.
+		return true;
 	}
 
 	// ---- blacklist plumbing -------------------------------------------------
@@ -603,7 +537,7 @@ public final class JarAnalyzer {
 
 				a.add(new Finding(
 						entry.getPattern() + (entry.getDescription().isEmpty()
-								? "" : " — " + entry.getDescription()),
+								? "" : " — " + entry.describe()),
 						entry.getSeverity(), source, entry.getCategory(),
 						entry.getPattern(), location, excerpt));
 

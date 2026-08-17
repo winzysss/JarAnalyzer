@@ -16,10 +16,11 @@ import com.jaranalyzer.scan.JarAnalysis;
 /**
  * Everything known about the selected JAR, in tabs.
  *
- * <p>The decompiled-code tab is the one that matters: it is the difference
- * between a tool that asserts a verdict and one that shows the operator the
- * evidence it read, which is what makes a finding arguable rather than an
- * accusation to be taken on faith.
+ * <p>The findings tab is the one that matters: it is the difference between a
+ * tool that asserts a verdict and one that shows the operator the evidence it
+ * read — the matched term, where it sat, and the surrounding text — which is
+ * what makes a finding arguable rather than an accusation to be taken on faith.
+ * Reading the actual source is the Decompile tab's job, one window over.
  */
 public class DetailPane extends JPanel {
 
@@ -29,7 +30,6 @@ public class DetailPane extends JPanel {
 
 	private final JTextArea overview = UiKit.codeArea();
 	private final JTextArea findings = UiKit.codeArea();
-	private final JTextArea code = UiKit.codeArea();
 
 	/**
 	 * Archive listing, manifest and per-JAR log, concatenated under headings.
@@ -64,7 +64,6 @@ public class DetailPane extends JPanel {
 		tabs.removeAll();
 		tabs.addTab(t("wjf.tab.overview"), UiKit.scroll(overview));
 		tabs.addTab(t("wjf.tab.findings"), UiKit.scroll(findings));
-		tabs.addTab(t("wjf.tab.code"), UiKit.scroll(code));
 		tabs.addTab(t("wjf.tab.details"), UiKit.scroll(details));
 		if (selected >= 0 && selected < tabs.getTabCount()) tabs.setSelectedIndex(selected);
 	}
@@ -85,7 +84,6 @@ public class DetailPane extends JPanel {
 		current = null;
 		overview.setText("\n  " + t("wjf.detail.empty"));
 		findings.setText("");
-		code.setText("");
 		details.setText("");
 		top(overview);
 	}
@@ -94,12 +92,10 @@ public class DetailPane extends JPanel {
 		current = a;
 		buildOverview(a);
 		buildFindings(a);
-		buildCode(a);
 		buildDetails(a);
 
 		top(overview);
 		top(findings);
-		top(code);
 		top(details);
 	}
 
@@ -127,9 +123,8 @@ public class DetailPane extends JPanel {
 
 		line(s, t("wjf.f.decompile"), a.getDecompileOutcome().display());
 		line(s, t("wjf.f.classes"), a.getClassCount() + " "
-				+ t("wjf.f.total") + ",  " + a.getClassesDecompiled() + " " + t("wjf.f.read")
-				+ ",  " + a.getClassesFailed() + " " + t("wjf.f.failed")
-				+ ",  " + a.getClassesSkipped() + " " + t("wjf.f.skipped"));
+				+ t("wjf.f.total") + ",  " + a.getClassesRead() + " " + t("wjf.f.read")
+				+ ",  " + a.getClassesUnreadable() + " " + t("wjf.f.failed"));
 		if (a.getDecompileError() != null) line(s, t("wjf.f.error"), a.getDecompileError());
 		s.append('\n');
 
@@ -209,70 +204,6 @@ public class DetailPane extends JPanel {
 		findings.setText(s.toString());
 	}
 
-	private void buildCode(JarAnalysis a) {
-		String text = a.getDecompiledText();
-		if (text == null || text.isEmpty()) {
-			// Nothing was reconstructed during the scan, which is now the normal
-			// case: decompiling every flagged archive cost most of the scan and
-			// changed no verdict, so it happens here instead — once, for the one
-			// archive somebody actually selected.
-			if (a.getClassCount() > 0 && a.getFile().isFile()) {
-				decompileOnDemand(a);
-			} else {
-				code.setText("\n  " + t("wjf.detail.nocode"));
-			}
-			return;
-		}
-		// The viewer is not a place to load 12 MB into a Swing document; the full
-		// text is still what the blacklist ran over and what export writes.
-		int limit = 2_000_000;
-		if (text.length() > limit) {
-			code.setText(text.substring(0, limit)
-					+ "\n\n// ---- " + t("wjf.detail.truncated") + " ("
-					+ String.format(Locale.ROOT, "%,d", text.length()) + " chars) ----\n");
-		} else {
-			code.setText(text);
-		}
-	}
-
-	/**
-	 * Reconstructs source for one archive, off the EDT.
-	 *
-	 * <p>Guarded by identity on {@code current}: the user can click through rows
-	 * faster than a large JAR decompiles, and without the check a slow result
-	 * would land in the pane belonging to a different archive.
-	 */
-	private void decompileOnDemand(final JarAnalysis a) {
-		code.setText("\n  " + t("wjf.detail.decompiling"));
-		Thread worker = new Thread(() -> {
-			String produced;
-			try (java.util.jar.JarFile jf = new java.util.jar.JarFile(a.getFile(), false)) {
-				com.jaranalyzer.DecompilerConfig cfg = new com.jaranalyzer.DecompilerConfig();
-				cfg.setShowSyntheticMembers(true);
-				com.jaranalyzer.scan.DecompileEngine.Options opt =
-						new com.jaranalyzer.scan.DecompileEngine.Options();
-				opt.deadlineNanos = System.nanoTime()
-						+ java.util.concurrent.TimeUnit.SECONDS.toNanos(90);
-				com.jaranalyzer.scan.DecompileEngine.run(jf, a, opt, cfg);
-				produced = a.getDecompiledText();
-			} catch (Throwable t) {
-				produced = "// " + t("wjf.detail.nocode") + "\n// " + t;
-			}
-			final String text = produced;
-			javax.swing.SwingUtilities.invokeLater(() -> {
-				if (current != a) return;
-				if (text == null || text.isEmpty()) {
-					code.setText("\n  " + t("wjf.detail.nocode"));
-				} else {
-					buildCode(a);
-				}
-				top(code);
-			});
-		}, "wjf-ondemand-decompile");
-		worker.setDaemon(true);
-		worker.start();
-	}
-
 	/** Archive listing + manifest + log, in one scrollable document. */
 	private void buildDetails(JarAnalysis a) {
 		StringBuilder s = new StringBuilder(16384);
@@ -311,20 +242,4 @@ public class DetailPane extends JPanel {
 		s.append("\n\n");
 	}
 
-	public void selectTab(int index) {
-		if (index >= 0 && index < tabs.getTabCount()) tabs.setSelectedIndex(index);
-	}
-
-	/** Jumps to the code tab and highlights the first occurrence of a term. */
-	public void revealInCode(String needle) {
-		tabs.setSelectedIndex(2);
-		if (needle == null || needle.isEmpty()) return;
-		String text = code.getText();
-		int i = text.toLowerCase(Locale.ROOT).indexOf(needle.toLowerCase(Locale.ROOT));
-		if (i >= 0) {
-			code.setCaretPosition(i);
-			code.select(i, i + needle.length());
-			code.requestFocusInWindow();
-		}
-	}
 }

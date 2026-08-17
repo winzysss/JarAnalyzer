@@ -82,11 +82,44 @@ public final class BlacklistStore {
 			List<BlacklistEntry> list = GSON.fromJson(r,
 					new TypeToken<List<BlacklistEntry>>() { }.getType());
 			if (list == null || list.isEmpty()) return defaults();
+			migrateDescriptions(list);
 			return new Blacklist(list);
 		} catch (Exception e) {
 			// Corrupt file: keep it for the user to inspect, carry on with defaults.
 			f.renameTo(new File(configDir(), "blacklist.corrupt-" + System.currentTimeMillis() + ".json"));
 			return defaults();
+		}
+	}
+
+	/**
+	 * Turns the descriptions the built-in terms used to carry into message keys.
+	 *
+	 * <p>Built-in descriptions were once stored as Turkish sentences, so a list
+	 * saved by an earlier version stays Turkish no matter which language the window
+	 * is set to. Matching the exact former wording rather than "any built-in term"
+	 * is what makes this safe to run on every load: a description the user wrote or
+	 * edited will not match, so their text is never overwritten.
+	 */
+	private static void migrateDescriptions(List<BlacklistEntry> list) {
+		java.util.Map<String, String> old = new java.util.HashMap<>();
+		old.put("Bilinen hile client'ı", "wjf.blc.client");
+		old.put("Hile client'ı adı (bağlamla birlikte)", "wjf.blc.clientCtx");
+		old.put("Aura / aim hile modülü", "wjf.blc.aura");
+		old.put("Savaş avantajı modülü", "wjf.blc.combat");
+		old.put("Hareket hile modülü", "wjf.blc.movement");
+		old.put("Görsel hile modülü", "wjf.blc.render");
+		old.put("Otomasyon hile modülü", "wjf.blc.player");
+		old.put("Dünya manipülasyonu", "wjf.blc.world");
+		old.put("Anticheat atlatma", "wjf.blc.bypass");
+		old.put("Anticheat adını hedef alan metin", "wjf.blc.bypassName");
+		old.put("Hile client mimarisi", "wjf.blc.structure");
+		old.put("Kimlik / oturum hırsızlığı", "wjf.blc.stealer");
+		old.put("Veri sızdırma adresi", "wjf.blc.exfil");
+		old.put("Bilinen hile paketi", "wjf.blc.package");
+
+		for (BlacklistEntry e : list) {
+			String key = old.get(e.getDescription());
+			if (key != null) e.setDescription(key);
 		}
 	}
 
@@ -173,7 +206,7 @@ public final class BlacklistStore {
 		// ---- Named cheat clients ---------------------------------------
 		// Product names. Nothing else is called these, so a match is decisive.
 		add(e, "Client", Severity.CRITICAL, MatchKind.WORD,
-				"Bilinen hile client'ı",
+				"wjf.blc.client",
 				"LiquidBounce", "Wurst", "Aristois", "MeteorClient", "Meteor Client",
 				"FutureClient", "Future Client", "ImpactClient", "Impact Client",
 				"RiseClient", "Rise Client", "Novoline", "Astolfo", "Huzuni", "Nodus",
@@ -190,26 +223,26 @@ public final class BlacklistStore {
 
 		// Names that are also ordinary words: only counted next to client context.
 		add(e, "Client", Severity.HIGH, MatchKind.REGEX,
-				"Hile client'ı adı (bağlamla birlikte)",
+				"wjf.blc.clientCtx",
 				"(?i)\\b(vape|raven|sigma|inertia|flux|pyro|smoke|reaper|chorus|ikea)\\b[\\s._-]{0,4}(client|hack|cheat|ware)",
 				"(?i)\\b(hacked|cheat)[\\s._-]{0,2}client\\b",
 				"(?i)\\bskid(ded|suite|fuscator)\\b");
 
 		// ---- Combat ----------------------------------------------------
-		add(e, "Combat", Severity.CRITICAL, MatchKind.WORD, "Aura / aim hile modülü",
+		add(e, "Combat", Severity.CRITICAL, MatchKind.WORD, "wjf.blc.aura",
 				"KillAura", "ForceField", "Forcefield", "MultiAura",
 				"SingleAura", "SwitchAura", "TriggerBot", "Aimbot",
 				"AimAssist", "SilentAim", "SilentAura", "ComboAura", "BowAimbot",
 				"CrystalAura", "AutoCrystal", "AnchorAura", "BedAura", "ClickAura", "TPAura");
 
-		add(e, "Combat", Severity.HIGH, MatchKind.WORD, "Savaş avantajı modülü",
+		add(e, "Combat", Severity.HIGH, MatchKind.WORD, "wjf.blc.combat",
 				"AutoClicker", "ReachHack", "AttackReach", "CombatReach", "HitBoxExpand",
 				"AntiKnockback", "AntiKB", "VelocityCancel", "NoHitDelay", "NoAttackDelay",
 				"AutoBlock", "SilentBlock", "FakeLag", "TickShift", "AutoSoup", "AutoPot",
 				"AutoGapple", "AutoTotem", "TargetStrafe", "AutoSword");
 
 		// ---- Movement --------------------------------------------------
-		add(e, "Movement", Severity.HIGH, MatchKind.WORD, "Hareket hile modülü",
+		add(e, "Movement", Severity.HIGH, MatchKind.WORD, "wjf.blc.movement",
 				"FlyHack", "SpeedHack", "BunnyHop", "BHop", "NoFall", "SafeWalk",
 				"WaterWalk", "AirWalk", "AirJump", "InfiniteJump", "HighJump", "LongJump",
 				"SuperJump", "SpiderHack", "WallClimb", "NoSlowDown", "ElytraFly",
@@ -217,13 +250,13 @@ public final class BlacklistStore {
 				"TickAccel", "TickAccelerate");
 
 		// ---- Render ----------------------------------------------------
-		add(e, "Render", Severity.CRITICAL, MatchKind.WORD, "Görsel hile modülü",
+		add(e, "Render", Severity.CRITICAL, MatchKind.WORD, "wjf.blc.render",
 				"XRayHack", "XrayMod", "X-Ray", "WallHack", "ChestESP",
 				"PlayerESP", "MobESP", "StorageESP", "EntityESP", "Chams", "Tracers",
 				"TrueSight", "NameProtect", "PlayerFinder");
 
 		// ---- Player / world -------------------------------------------
-		add(e, "Player", Severity.HIGH, MatchKind.WORD, "Otomasyon hile modülü",
+		add(e, "Player", Severity.HIGH, MatchKind.WORD, "wjf.blc.player",
 				"ChestStealer", "AutoArmor", "AutoTool", "FastPlace", "FastBreak",
 				"NoBreakDelay", "PacketMine", "GhostHand", "FastEat", "AutoFish",
 				"NoCooldown", "CooldownBypass", "InvCleaner", "InventoryCleaner",
@@ -232,41 +265,41 @@ public final class BlacklistStore {
 		// "Scaffold", "NoClip" ve "Wolfram" kasıtlı olarak yok: "scaffolding" vanilla
 		// bir blok, "noclip" her oyun motorunda geçen genel bir terim, "Wolfram" ise
 		// bilimsel yazılımda sık rastlanan bir isim.
-		add(e, "World", Severity.CRITICAL, MatchKind.WORD, "Dünya manipülasyonu",
+		add(e, "World", Severity.CRITICAL, MatchKind.WORD, "wjf.blc.world",
 				"Nuker", "CivBreak", "BedFucker", "BedBreaker",
 				"ServerCrasher", "Disabler", "SurroundBreak", "BurrowBreak");
 
 		// ---- Anticheat evasion -----------------------------------------
-		add(e, "Bypass", Severity.CRITICAL, MatchKind.WORD, "Anticheat atlatma",
+		add(e, "Bypass", Severity.CRITICAL, MatchKind.WORD, "wjf.blc.bypass",
 				"AntiCheatBypass", "AntiAntiCheat", "BypassAC", "PacketBypass",
 				"ReachBypass", "HitBypass", "CombatBypass", "SprintBypass",
 				"HitDelayBypass", "PingSpoof", "PacketCancel", "SilentCancel",
 				"CancelPacket", "FakeHit", "SilentHit", "GhostHit");
 
-		add(e, "Bypass", Severity.HIGH, MatchKind.REGEX, "Anticheat adını hedef alan metin",
+		add(e, "Bypass", Severity.HIGH, MatchKind.REGEX, "wjf.blc.bypassName",
 				"(?i)\\bbypass(es|ed|ing)?\\b[\\s._-]{0,4}\\b(nocheatplus|ncp|aac|matrix|spartan|vulcan|grim|intave|verus|polar|karhu|themis|horizon)\\b",
 				"(?i)\\b(nocheatplus|aac|matrix|spartan|vulcan|grimac|intave|verus|karhu)\\b.{0,24}\\b(bypass|disable|defeat)\\b");
 
 		// ---- Cheat client architecture ---------------------------------
 		// "ModuleManager" is deliberately absent: it is a class name in a great
 		// deal of perfectly ordinary software.
-		add(e, "Structure", Severity.HIGH, MatchKind.WORD, "Hile client mimarisi",
+		add(e, "Structure", Severity.HIGH, MatchKind.WORD, "wjf.blc.structure",
 				"HackManager", "ClickGUI", "ClickGui", "HackMenu", "CheatMenu",
 				"ToggleHack", "EnableHack", "DisableHack", "HackedClient",
 				"CheatClient", "HackClient", "HackClassLoader");
 
 		// ---- Malware ---------------------------------------------------
-		add(e, "Malware", Severity.CRITICAL, MatchKind.WORD, "Kimlik / oturum hırsızlığı",
+		add(e, "Malware", Severity.CRITICAL, MatchKind.WORD, "wjf.blc.stealer",
 				"TokenGrabber", "TokenStealer", "PasswordStealer", "SessionStealer",
 				"CookieStealer", "Keylogger", "KeyLogger", "ClipboardStealer",
 				"WalletStealer", "SeedPhrase", "InfoStealer", "RatClient");
 
-		add(e, "Malware", Severity.CRITICAL, MatchKind.REGEX, "Veri sızdırma adresi",
+		add(e, "Malware", Severity.CRITICAL, MatchKind.REGEX, "wjf.blc.exfil",
 				"(?i)https?://(discord(app)?\\.com/api/webhooks|api\\.telegram\\.org/bot)",
 				"(?i)\\\\AppData\\\\Roaming\\\\discord(canary|ptb)?\\\\Local\\s*Storage\\\\leveldb");
 
 		// ---- Known cheat package roots ---------------------------------
-		add(e, "Package", Severity.CRITICAL, MatchKind.LITERAL, "Bilinen hile paketi",
+		add(e, "Package", Severity.CRITICAL, MatchKind.LITERAL, "wjf.blc.package",
 				"org/rusherhack", "me/earth/earthhack", "thunder/hack",
 				"com/chorus/impl/modules", "keystrokesmod/module/impl",
 				"net/mommymarlow", "lol/polinexclient", "net/taunahi",

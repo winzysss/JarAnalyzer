@@ -1,26 +1,17 @@
 package com.jaranalyzer.scan;
 
-/** How far decompilation got on one JAR. */
+/** How far the read got on one JAR. */
 public enum DecompileOutcome {
 
 	NOT_ATTEMPTED("Not attempted", "Denenmedi"),
 
 	/**
-	 * Every class was read and searched through its constant pool, but no source
-	 * was reconstructed. This is <em>not</em> an opaque result — the contents were
-	 * examined; they were simply not turned back into Java, which costs two
-	 * minutes per large archive and adds nothing a keyword search can use.
+	 * The classes were read and searched through their constant pools. This is the
+	 * ordinary successful result: no source was reconstructed, because every name
+	 * and literal a blacklist term can match is already in the pool, and rebuilding
+	 * Java out of it costs minutes per large archive without finding anything more.
 	 */
 	POOL_SCANNED("Scanned", "Tarandı"),
-
-	/** CFR produced Java source for every class. */
-	FULL_SOURCE("Source", "Kaynak"),
-
-	/** Source for some classes; the rest fell back to a bytecode listing. */
-	PARTIAL_SOURCE("Partial", "Kısmi"),
-
-	/** No class yielded source; only bytecode listings were recoverable. */
-	BYTECODE_ONLY("Bytecode", "Bytecode"),
 
 	/** Classes are present but nothing could be read out of any of them. */
 	FAILED("Failed", "Başarısız"),
@@ -61,6 +52,6 @@ public enum DecompileOutcome {
 	 */
 	public boolean isOpaque() {
 		return this == FAILED || this == ENCRYPTED || this == UNREADABLE
-				|| this == NOT_AN_ARCHIVE || this == BYTECODE_ONLY;
+				|| this == NOT_AN_ARCHIVE;
 	}
 }

@@ -48,8 +48,7 @@ public final class WinzyTheme {
 
 	// =====================================================================
 
-	public static void apply(String schemeKey) {
-		WinzyPalette.setScheme(schemeKey);
+	public static void apply() {
 		resolveFonts();
 
 		try {
@@ -198,6 +197,10 @@ public final class WinzyTheme {
 		}
 
 		applyKeys();
+
+		// Installing a look and feel replaces its defaults table, so the localised
+		// dialog and file-chooser strings have to be written back after it.
+		com.jaranalyzer.LanguageManager.applySwingStrings();
 	}
 
 	private static ColorUIResource res(Color c) {

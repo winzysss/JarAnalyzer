@@ -219,7 +219,13 @@ public final class ArchiveInspector {
 				if (r.traversalNames.size() < 20) r.traversalNames.add(n);
 			}
 
-			if (!isPlainAscii(n) && r.nonAsciiNames.size() < 20) {
+			// Only meaningful when the archive says its names are UTF-8. Without
+			// that flag the bytes are in whatever code page the machine that
+			// zipped it used, and reading them as Latin-1 turns ordinary Turkish
+			// letters into control characters — an artefact of the decoding, not
+			// evidence about the file.
+			if ((e.flags & (1 << 11)) != 0
+					&& isDeceptiveName(n) && r.nonAsciiNames.size() < 20) {
 				r.nonAsciiNames.add(n);
 			}
 
@@ -255,12 +261,59 @@ public final class ArchiveInspector {
 		}
 	}
 
-	private static boolean isPlainAscii(String s) {
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			if (c < 0x20 || c > 0x7E) return false;
+	/**
+	 * Whether an entry name is built to be misread rather than merely non-English.
+	 *
+	 * <p>"Not ASCII" is the wrong test. This tool's users are Turkish, and an
+	 * archive full of {@code Açıklama.txt} and {@code Ayarlar-şablonu.json} is an
+	 * ordinary archive; flagging it teaches people to ignore the warning, which
+	 * costs more than the check is worth. What actually signals trickery is a name
+	 * that renders as something other than what it is:
+	 *
+	 * <ul>
+	 * <li>invisible or direction-flipping characters — a zero-width space inside
+	 *     {@code Kill<ZWSP>Aura} defeats a keyword search while looking untouched,
+	 *     and a right-to-left override makes {@code exe.dahil} display as
+	 *     {@code lihad.exe};
+	 * <li>two alphabets in one word — the Cyrillic {@code а} and the Latin
+	 *     {@code a} are separate characters that draw identically, so mixing them
+	 *     is how a name is made to look like a familiar one without being it.
+	 * </ul>
+	 *
+	 * <p>A name written entirely in one non-Latin script is just that language, and
+	 * is not flagged.
+	 */
+	private static boolean isDeceptiveName(String s) {
+		boolean latin = false;
+		boolean confusableScript = false;
+
+		for (int i = 0; i < s.length(); ) {
+			int cp = s.codePointAt(i);
+			i += Character.charCount(cp);
+
+			int type = Character.getType(cp);
+			if (type == Character.FORMAT || type == Character.CONTROL
+					|| type == Character.SURROGATE || type == Character.UNASSIGNED) {
+				return true;
+			}
+			// Spaces that are not the space bar: used to pad a name into looking
+			// like a different one, or to break a term in two.
+			if (Character.isSpaceChar(cp) && cp != ' ') return true;
+
+			Character.UnicodeScript script;
+			try {
+				script = Character.UnicodeScript.of(cp);
+			} catch (IllegalArgumentException e) {
+				return true;   // not a valid code point at all
+			}
+			if (script == Character.UnicodeScript.LATIN) latin = true;
+			else if (script == Character.UnicodeScript.CYRILLIC
+					|| script == Character.UnicodeScript.GREEK) {
+				confusableScript = true;
+			}
 		}
-		return true;
+
+		return latin && confusableScript;
 	}
 
 	// ---- low-level helpers -------------------------------------------------

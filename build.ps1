@@ -14,6 +14,7 @@ param(
     [switch]$Clean,
     [switch]$Quiet,
     [switch]$Package,
+    [switch]$SingleFile,
     [switch]$Icon
 )
 
@@ -84,6 +85,12 @@ if ($Clean -and (Test-Path $buildDir)) {
     Remove-Item $buildDir -Recurse -Force
 }
 
+# javac only writes the classes it compiles; it never removes one whose source
+# is gone. Left alone, a deleted class stays in build\classes and is packaged
+# into every jar after it -- which is how dead code ships long after it was
+# removed from the repository. The class output is cheap to rebuild, so it is
+# always emptied rather than only under -Clean.
+if (Test-Path $classesDir) { Remove-Item $classesDir -Recurse -Force }
 New-Item -ItemType Directory -Force $classesDir | Out-Null
 
 # ---- classpath ------------------------------------------------------
@@ -282,6 +289,66 @@ if ($Package) {
     Say ""
     Say "  UYGULAMA -> $exePath" 'Green'
     Say "  Boyut: $appSize MB  (Java kurulu olmasi gerekmez)" 'DarkGray'
+    Say "======================================================" 'DarkMagenta'
+}
+
+# ---------------------------------------------------------------------------
+#  Single-file launcher
+#
+#  -Package produces a directory: a launcher, a Java runtime and the jar. That
+#  is not something you can hand to someone as one download, so this wraps the
+#  whole directory in one exe that unpacks itself on first run. The release
+#  asset is built here rather than by hand, so what is published is always the
+#  same thing the repository describes.
+# ---------------------------------------------------------------------------
+if ($SingleFile) {
+    $distDir = Join-Path $root 'dist'
+    $appDir = Join-Path $distDir 'Jar Analyzer'
+    if (-not (Test-Path $appDir)) {
+        Write-Host "ONCE -Package calistirilmali (dist\Jar Analyzer yok)" -ForegroundColor Red
+        exit 1
+    }
+
+    $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    if (-not (Test-Path $csc)) {
+        Write-Host "csc.exe bulunamadi: $csc" -ForegroundColor Red
+        exit 1
+    }
+
+    Say ""
+    Say "[tek dosya] payload paketleniyor..." 'Cyan'
+
+    $payload = Join-Path $distDir 'payload.zip'
+    if (Test-Path $payload) { Remove-Item $payload -Force }
+    Compress-Archive -Path $appDir -DestinationPath $payload -CompressionLevel Optimal
+
+    $outExe = Join-Path $distDir 'JarAnalyzer.exe'
+    if (Test-Path $outExe) { Remove-Item $outExe -Force }
+
+    Say "[tek dosya] launcher derleniyor..."
+    & $csc '/nologo' '/target:winexe' '/optimize+' `
+        "/out:$outExe" `
+        "/win32icon:$iconFile" `
+        "/win32manifest:$(Join-Path $root 'tools\launcher.manifest')" `
+        "/resource:$payload,payload.zip" `
+        '/reference:System.dll' '/reference:System.Drawing.dll' `
+        '/reference:System.Windows.Forms.dll' `
+        '/reference:System.IO.Compression.dll' `
+        '/reference:System.IO.Compression.FileSystem.dll' `
+        (Join-Path $root 'tools\Launcher.cs')
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "LAUNCHER DERLENEMEDI" -ForegroundColor Red
+        exit 1
+    }
+
+    Remove-Item $payload -Force
+    $mb = [math]::Round((Get-Item $outExe).Length / 1MB, 1)
+    $sha = (Get-FileHash $outExe -Algorithm SHA256).Hash.ToLower()
+
+    Say ""
+    Say "  TEK DOSYA -> $outExe" 'Green'
+    Say "  Boyut: $mb MB" 'DarkGray'
+    Say "  SHA-256: $sha" 'DarkGray'
     Say "======================================================" 'DarkMagenta'
 }
 
