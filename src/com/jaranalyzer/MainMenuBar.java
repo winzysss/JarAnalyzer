@@ -2,15 +2,12 @@ package com.jaranalyzer;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -24,7 +21,6 @@ public class MainMenuBar extends JMenuBar {
 	private static final long serialVersionUID = 1L;
 
 	private MainWindow mainWindow;
-	private DecompilerConfig decompilerConfig;
 	private AppPreferences appPrefs;
 	private ConfigSaver configSaver;
 
@@ -34,7 +30,6 @@ public class MainMenuBar extends JMenuBar {
 	public MainMenuBar(MainWindow mainWnd) {
 		this.mainWindow = mainWnd;
 		configSaver = ConfigSaver.getLoadedInstance();
-		decompilerConfig = configSaver.getDecompilerConfig();
 		appPrefs = configSaver.getAppPreferences();
 
 		rebuildMenus();
@@ -194,17 +189,6 @@ public class MainMenuBar extends JMenuBar {
 		uiLanguageMenu.add(enItem);
 
 		settingsMenu.add(uiLanguageMenu);
-
-		settingsMenu.addSeparator();
-
-		JCheckBoxMenuItem deobfItem = new JCheckBoxMenuItem(LanguageManager.getString("menu.settings.deobfuscate"), appPrefs.isDeobfuscateEnabled());
-		deobfItem.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				appPrefs.setDeobfuscateEnabled(e.getStateChange() == ItemEvent.SELECTED);
-			}
-		});
-		settingsMenu.add(deobfItem);
 	}
 
 	private void buildHelpMenu(JMenu helpMenu) {

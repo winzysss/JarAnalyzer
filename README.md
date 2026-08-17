@@ -87,7 +87,7 @@ değiştiremez veya kendi projende kullanamazsın. Derlenmiş uygulama serbestç
 indirilip çalıştırılabilir. Bkz. [`LICENSE`](LICENSE) ve
 [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**JarAnalyzer.exe SHA-256:** `c14a0f27c18a700d61aa312d995716c0d0c73d10c01ac44954e758263a121f2b`
+**JarAnalyzer.exe SHA-256:** `3219f59561bde4ddbbd509a19a1e01dd68f92053319122e35ab662c4d15ec208`
 (Yardım → Hakkında çalışan kopyanın hash'ini gösterir.)
 
 ---
@@ -179,5 +179,5 @@ The source is published **for inspection only** — you may read it, but not cop
 modify or reuse it without permission. The compiled application may be freely
 downloaded and run. See [`LICENSE`](LICENSE) and [`THIRD-PARTY.md`](THIRD-PARTY.md).
 
-**JarAnalyzer.exe SHA-256:** `c14a0f27c18a700d61aa312d995716c0d0c73d10c01ac44954e758263a121f2b`
+**JarAnalyzer.exe SHA-256:** `3219f59561bde4ddbbd509a19a1e01dd68f92053319122e35ab662c4d15ec208`
 (Help → About shows the running copy's hash.)

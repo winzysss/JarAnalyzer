@@ -11,7 +11,6 @@ public class AppPreferences {
 	private boolean isPackageExplorerStyle = true;
 	private boolean isSingleClickOpenEnabled = true;
 	private boolean isExitByEscEnabled = false;
-	private boolean isDeobfuscateEnabled = true;
 	private String language = "tr";
 	private java.util.List<String> userKeywords = new java.util.ArrayList<>();
 
@@ -98,14 +97,6 @@ public class AppPreferences {
 
 	public void setExitByEscEnabled(boolean isExitByEscEnabled) {
 		this.isExitByEscEnabled = isExitByEscEnabled;
-	}
-
-	public boolean isDeobfuscateEnabled() {
-		return isDeobfuscateEnabled;
-	}
-
-	public void setDeobfuscateEnabled(boolean isDeobfuscateEnabled) {
-		this.isDeobfuscateEnabled = isDeobfuscateEnabled;
 	}
 
 	public int getFont_size() {
