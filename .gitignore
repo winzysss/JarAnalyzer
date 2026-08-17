@@ -20,3 +20,5 @@ Desktop.ini
 # Scratch
 *.log
 /screenshots/
+
+# docs/ is tracked on purpose: the README's screenshots live there.
